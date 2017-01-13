@@ -34,23 +34,38 @@ var apiRoutes = express.Router();
 
 // create a new user account (POST http://localhost:8080/api/signup)
 apiRoutes.post('/register', function(req, res) {
+
   if (!req.body.firstName || !req.body.lastName || !req.body.email ||!req.body.password) {
     res.json({success: false, msg: 'Please pass name and password.'});
-  } else {
+  }
+  else {
     var newUser = new User({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
       password: req.body.password
     });
-
-    console.log(newUser);
-    // save the user
-    newUser.save(function(err) {
-      if (err) {
-        return res.json({success: false, msg: 'Username already exists.'});
+    User.find({email:newUser.email}, function(err, users){
+      if(!err){
+        if(users.length > 0){
+          // A user was found so don't create another account
+          res.json({success: false, msg:'User already exists'});
+        }
+        else{
+          newUser.save(function(error){
+            if(!error){
+              res.json({success: true, msg:'User successfully created'});
+            }
+            else{
+              res.json({success: false, msg:'Error in creating the user: ' + error});
+            }
+          });
+        }
       }
-      res.json({success: true, msg: 'Successful created new user.'});
+      else{
+        console.log(err);
+        res.json({success: false, msg:'There was an error in handling your request: ' + err});
+      }
     });
   }
 });
